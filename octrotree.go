@@ -26,7 +26,7 @@ const (
 	ZMAX
 )
 
-const G = 1.0
+const G = 6.67e-11
 
 // MAX_DEPTH of the octotree
 const MAX_DEPTH = 32
@@ -115,6 +115,21 @@ func (o *Octotree) query(bounds [6]float64) []*Item {
 	return results
 }
 
+func (o *Octotree) calculateForceForPoint(point [4]float64) [3]float64 {
+	if o.IsLeaf {
+		return componentForce(point, o.Mass)
+	} else {
+		var result [3]float64
+		for _, octant := range o.Octants {
+			f := componentForce(point, octant.Mass)
+			result[0] += f[0]
+			result[1] += f[1]
+			result[2] += f[2]
+		}
+		return result
+	}
+}
+
 func (o *Octotree) calculateMassDistribution() {
 	if o.IsLeaf {
 		for _, item := range o.Items {
@@ -138,14 +153,21 @@ func (o *Octotree) calculateMassDistribution() {
 	}
 }
 
-// force returns the force between two masses [x,y,z,m float64]
-func force(a, b [4]float64) float64 {
-	return (G * a[3] * b[3]) / math.Pow(distance(a, b), 2)
-}
-
-// distance returns distance between two points
-func distance(a, b [4]float64) float64 {
-	return math.Sqrt(math.Pow(b[0]-a[0], 2) + math.Pow(b[1]-a[1], 2) + math.Pow(b[2]-a[2], 2))
+func componentForce(a, b [4]float64) [3]float64 {
+	if a[3] == 0 || b[3] == 0 {
+		return [3]float64{0.0, 0.0, 0.0}
+	}
+	x := b[0] - a[0]
+	y := b[1] - a[1]
+	z := b[2] - a[2]
+	m1 := a[3]
+	m2 := b[3]
+	d := math.Sqrt(math.Pow(x, 2) + math.Pow(y, 2) + math.Pow(z, 2))
+	f := (G * m1 * m2) / math.Pow(d, 2)
+	fx := f * (x / d)
+	fy := f * (y / d)
+	fz := f * (z / d)
+	return [3]float64{fx, fy, fz}
 }
 
 // midpoint calculates the midpoint of two float64 variables.

@@ -15,10 +15,10 @@ func main() {
 	o := &Octotree{}
 	o.Depth = 1
 	o.IsLeaf = true
-	o.SetBounds([6]float64{-1000.0, -1000.0, -1000.0, 1000.0, 1000.0, 1000.0})
+	o.SetBounds([6]float64{-1.0, -1.0, -1.0, 1.0, 1.0, 1.0})
 
 	start := time.Now()
-	for i := 0; i < 1000000; i += 1 {
+	for i := 0; i < 10; i += 1 {
 		item := &Item{Mass: [4]float64{r.Float64()*2 - 1, r.Float64()*2 - 1, r.Float64()*2 - 1, r.Float64() * 2}}
 		o.add(item)
 	}
@@ -26,7 +26,7 @@ func main() {
 	log.Println("Octotree add*10000 took ", elapsed.Nanoseconds()/1000, "us.")
 
 	start = time.Now()
-	results := o.query([6]float64{-1000.0, -1000.0, -1000.0, 1000.0, 1000.0, 1000.0})
+	results := o.query([6]float64{-1.0, -1.0, -1.0, 1.0, 1.0, 1.0})
 	elapsed = time.Since(start)
 
 	log.Println("Octotree query took ", elapsed.Nanoseconds(), "ns.")
@@ -43,4 +43,8 @@ func main() {
 	log.Println("itemQueries", itemQueries)
 	o.calculateMassDistribution()
 	log.Println("Mass:", o.Mass[3], "-> X", o.Mass[0], "Y", o.Mass[1], "Z", o.Mass[2])
+	for _, i := range results {
+		f := o.calculateForceForPoint(i.Mass)
+		log.Println("forces: x", f[0], "y", f[1], "z", f[2])
+	}
 }
